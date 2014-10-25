@@ -966,6 +966,25 @@ td.insert, td.equal, td.delete, td.empty {
     width: 50%;
 }
 
+table.diff .add-comment {
+    position: absolute;
+    background: blue;
+    top: 0;
+    color: white;
+    padding: 2px;
+    border: solid 1px blue;
+    border-radius: 3px;
+    z-index: 99;
+}
+
+table.diff tbody tr.inline-comment-form:hover {
+    background-color: #fff;
+}
+
+table.diff tbody tr.inline-comment-form:hover td{
+    background-color: #fff;
+}
+
 /****************************************************************************/
 /* Repository Settings */
 /****************************************************************************/

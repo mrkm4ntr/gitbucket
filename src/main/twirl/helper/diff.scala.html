@@ -39,7 +39,7 @@
 }
 @diffs.zipWithIndex.map { case (diff, i) =>
   <a name="diff-@i"></a>
-  <table class="table table-bordered">
+  <table class="table table-bordered" commitId="@newCommitId" fileName="@diff.newPath">
     <tr>
       <th style="font-weight: normal; line-height: 27px;" class="box-header">
         @if(diff.changeType == ChangeType.COPY || diff.changeType == ChangeType.RENAME){
@@ -118,6 +118,41 @@ $(function(){
         }
       }
     }
+    $('table.diff tr').hover(
+      function() {
+        $(this).find('b').css('display', 'inline-block');
+      },
+      function() {
+        $(this).find('b').css('display', 'none');
+      }
+    );
+    $('.add-comment').click(function() {
+      $(this).hide();
+      var $tr = $(this).closest('tr');
+      if (!$tr.next().hasClass('inline-comment-form')) {
+        var commitId = $(this).closest('.table-bordered').attr('commitId');
+        var fileName = $(this).closest('.table-bordered').attr('fileName');
+        var newLineNumber = $(this).parent().clone().children().remove().end().text();
+        var url = '@url(repository)/commit/' + commitId + '/comment/_form?fileName=' + fileName;
+        if (!isNaN(newLineNumber)) {
+          url += ('&newLineNumber=' + newLineNumber)
+        }
+        $.get(
+          url,
+          {
+            dataType : 'html'
+          },
+          function(responseContent) {
+            var tmp = $('<tr class="inline-comment-form"><td colspan="3" style="white-space: initial; padding: 20px;"></td></tr>')
+            tmp.children('td').html(responseContent)
+            $tr.after(tmp);
+          }
+        );
+      }
+    });
+    $('table.diff').on('click', '.btn-default', function() {
+      $(this).closest('.inline-comment-form').remove();
+    });
   }
 });
 </script>

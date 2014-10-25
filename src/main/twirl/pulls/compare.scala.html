@@ -81,7 +81,7 @@
         </tr>
       </table>
     } else {
-      @pulls.html.commits(commits, repository)
+      @pulls.html.commits(commits = commits, repository = repository)
       @helper.html.diff(diffs, repository, Some(commitId), Some(sourceId), true)
     }
   }

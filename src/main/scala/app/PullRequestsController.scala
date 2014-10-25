@@ -18,14 +18,15 @@ import org.slf4j.LoggerFactory
 import org.eclipse.jgit.merge.MergeStrategy
 import org.eclipse.jgit.errors.NoMergeBaseException
 import service.WebHookService.WebHookPayload
+import model.Comment
 
 class PullRequestsController extends PullRequestsControllerBase
   with RepositoryService with AccountService with IssuesService with PullRequestService with MilestonesService with LabelsService
-  with ActivityService with WebHookService with ReferrerAuthenticator with CollaboratorsAuthenticator
+  with CommitsService with ActivityService with WebHookService with ReferrerAuthenticator with CollaboratorsAuthenticator
 
 trait PullRequestsControllerBase extends ControllerBase {
   self: RepositoryService with AccountService with IssuesService with MilestonesService with LabelsService
-    with ActivityService with PullRequestService with WebHookService with ReferrerAuthenticator with CollaboratorsAuthenticator =>
+    with CommitsService with ActivityService with PullRequestService with WebHookService with ReferrerAuthenticator with CollaboratorsAuthenticator =>
 
   private val logger = LoggerFactory.getLogger(classOf[PullRequestsControllerBase])
 
@@ -71,9 +72,14 @@ trait PullRequestsControllerBase extends ControllerBase {
           val (commits, diffs) =
             getRequestCompareInfo(owner, name, pullreq.commitIdFrom, owner, name, pullreq.commitIdTo)
 
+          val comments: List[Comment] = getComments(owner, name, issueId)
+          val comments2: List[Comment] = commits.flatten.map(commit => getCommitComments(owner, name, commit.id)).flatten.toList
+
+          val allComments = (comments ::: comments2).sortWith(_.registeredDate before _.registeredDate)
+
           pulls.html.pullreq(
             issue, pullreq,
-            getComments(owner, name, issueId),
+            (comments2 ::: comments).sortWith((a, b) => a.registeredDate before b.registeredDate),
             getIssueLabels(owner, name, issueId),
             (getCollaborators(owner, name) ::: (if(getAccountByUserName(owner).get.isGroupAccount) Nil else List(owner))).sorted,
             getMilestonesWithIssueCount(owner, name),
