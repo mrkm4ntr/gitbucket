@@ -118,6 +118,21 @@ $(function(){
         }
       }
     }
+    $('.inline-comment').each(function(i, v) {
+      var $v = $(v);
+      var filename = $v.attr('filename');
+      var oldline = $v.attr('oldline');
+      var newline = $v.attr('newline');
+      var tmp = $('<tr class="inline-comment-form"><td colspan="3" style="white-space: initial; padding: 10px;"></td></tr>');
+      tmp.children('td').html($(this).clone().show());
+      $(this).hide();
+      if (typeof oldline !== 'undefined') {
+        $('table[filename="' + filename + '"]').find('table.inlinediff').find('tr:has(.oldline:contains("' + oldline + '"))').after(tmp);
+      } else {
+        $('table[filename="' + filename + '"]').find('table.inlinediff').find('tr:has(.newline:contains("' + newline + '"))').after(tmp);
+      }
+    });
+    location.hash = location.hash;
     $('table.diff tr').hover(
       function() {
         $(this).find('b').css('display', 'inline-block');
@@ -132,9 +147,13 @@ $(function(){
       if (!$tr.next().hasClass('inline-comment-form')) {
         var commitId = $(this).closest('.table-bordered').attr('commitId');
         var fileName = $(this).closest('.table-bordered').attr('fileName');
-        var newLineNumber = $(this).parent().clone().children().remove().end().text();
+        var oldLineNumber = $(this).closest('.newline').prev('.oldline').text();
+        var newLineNumber = $(this).closest('.newline').clone().children().remove().end().text();
         var url = '@url(repository)/commit/' + commitId + '/comment/_form?fileName=' + fileName;
-        if (!isNaN(newLineNumber)) {
+        if (!isNaN(oldLineNumber) && !(oldLineNumber == null || oldLineNumber == '')) {
+          url += ('&oldLineNumber=' + oldLineNumber)
+        }
+        if (!isNaN(newLineNumber) && !(newLineNumber == null || newLineNumber == '')) {
           url += ('&newLineNumber=' + newLineNumber)
         }
         $.get(
@@ -143,8 +162,8 @@ $(function(){
             dataType : 'html'
           },
           function(responseContent) {
-            var tmp = $('<tr class="inline-comment-form"><td colspan="3" style="white-space: initial; padding: 20px;"></td></tr>')
-            tmp.children('td').html(responseContent)
+            var tmp = $('<tr class="inline-comment-form"><td colspan="3" style="white-space: initial; padding: 20px;"></td></tr>');
+            tmp.children('td').html(responseContent);
             $tr.after(tmp);
           }
         );

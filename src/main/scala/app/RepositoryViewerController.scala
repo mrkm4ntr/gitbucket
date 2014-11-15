@@ -244,8 +244,8 @@ trait RepositoryViewerControllerBase extends ControllerBase {
 
   post("/:owner/:repository/commit/:id/comment/new", commentForm)(readableUsersOnly { (form, repository) =>
     val id = params("id")
-    createCommitComment(repository.owner, repository.name, id, context.loginAccount.get.userName, form.content, form.fileName, form.oldLineNumber, form.newLineNumber)
-    redirect(s"/${repository.owner}/${repository.name}/commit/${id}")
+    val commentId = createCommitComment(repository.owner, repository.name, id, context.loginAccount.get.userName, form.content, form.fileName, form.oldLineNumber, form.newLineNumber)
+    redirect(s"/${repository.owner}/${repository.name}/commit/${id}#commit-comment-${commentId}")
   })
 
   ajaxGet("/:owner/:repository/commit/:id/comment/_form")(readableUsersOnly { repository =>
