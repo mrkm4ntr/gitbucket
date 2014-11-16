@@ -123,13 +123,17 @@ $(function(){
       var filename = $v.attr('filename');
       var oldline = $v.attr('oldline');
       var newline = $v.attr('newline');
-      var tmp = $('<tr class="inline-comment-form"><td colspan="3" style="white-space: initial; padding: 10px;"></td></tr>');
+      var tmp = $('<tr><td colspan="3" style="white-space: initial; padding: 10px;"></td></tr>');
       tmp.children('td').html($(this).clone().show());
       $(this).hide();
       if (typeof oldline !== 'undefined') {
-        $('table[filename="' + filename + '"]').find('table.inlinediff').find('tr:has(.oldline:contains("' + oldline + '"))').after(tmp);
+        $('table[filename="' + filename + '"]').find('table.inlinediff').find('.oldline').filter(function() {
+          return $(this).text().match(new RegExp('^' + oldline + '$'));
+        }).parent().after(tmp);
       } else {
-        $('table[filename="' + filename + '"]').find('table.inlinediff').find('tr:has(.newline:contains("' + newline + '"))').after(tmp);
+        $('table[filename="' + filename + '"]').find('table.inlinediff').find('.newline').filter(function() {
+          return $(this).text().match(new RegExp('^' + newline + '¥+$'));
+        }).parent().after(tmp);
       }
     });
     location.hash = location.hash;
