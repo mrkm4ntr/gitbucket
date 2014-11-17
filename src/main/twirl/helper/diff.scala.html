@@ -2,7 +2,8 @@
  repository: service.RepositoryService.RepositoryInfo,
  newCommitId: Option[String],
  oldCommitId: Option[String],
- showIndex: Boolean)(implicit context: app.Context)
+ showIndex: Boolean,
+ hasWritePermission: Boolean)(implicit context: app.Context)
 @import context._
 @import view.helpers._
 @import org.eclipse.jgit.diff.DiffEntry.ChangeType
@@ -137,6 +138,7 @@ $(function(){
       }
     });
     location.hash = location.hash;
+    @if(hasWritePermission) {
     $('table.diff tr').hover(
       function() {
         $(this).find('b').css('display', 'inline-block');
@@ -176,6 +178,7 @@ $(function(){
     $('table.diff').on('click', '.btn-default', function() {
       $(this).closest('.inline-comment-form').remove();
     });
+    }
   }
 });
 </script>

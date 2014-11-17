@@ -83,7 +83,7 @@
         </td>
       </tr>
     </table>
-    @helper.html.diff(diffs, repository, Some(commit.id), oldCommitId, true)
+    @helper.html.diff(diffs, repository, Some(commit.id), oldCommitId, true, hasWritePermission)
     @issues.html.commentlist(None, comments, hasWritePermission, repository, None)
     @commentform(commitId = commitId, hasWritePermission = hasWritePermission, repository = repository)
   }

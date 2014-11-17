@@ -72,14 +72,10 @@ trait PullRequestsControllerBase extends ControllerBase {
           val (commits, diffs) =
             getRequestCompareInfo(owner, name, pullreq.commitIdFrom, owner, name, pullreq.commitIdTo)
 
-          val comments: List[Comment] = getComments(owner, name, issueId)
-          val comments2: List[Comment] = commits.flatten.map(commit => getCommitComments(owner, name, commit.id)).flatten.toList
-
-          val allComments = (comments ::: comments2).sortWith(_.registeredDate before _.registeredDate)
-
           pulls.html.pullreq(
             issue, pullreq,
-            (comments2 ::: comments).sortWith((a, b) => a.registeredDate before b.registeredDate),
+            (commits.flatten.map(commit => getCommitComments(owner, name, commit.id)).flatten.toList ::: getComments(owner, name, issueId))
+              .sortWith((a, b) => a.registeredDate before b.registeredDate),
             getIssueLabels(owner, name, issueId),
             (getCollaborators(owner, name) ::: (if(getAccountByUserName(owner).get.isGroupAccount) Nil else List(owner))).sorted,
             getMilestonesWithIssueCount(owner, name),

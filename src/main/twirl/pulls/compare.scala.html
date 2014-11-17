@@ -82,7 +82,7 @@
       </table>
     } else {
       @pulls.html.commits(commits = commits, repository = repository)
-      @helper.html.diff(diffs, repository, Some(commitId), Some(sourceId), true)
+      @helper.html.diff(diffs, repository, Some(commitId), Some(sourceId), true, hasWritePermission)
     }
   }
 }

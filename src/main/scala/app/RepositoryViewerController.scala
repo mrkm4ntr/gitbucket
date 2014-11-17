@@ -245,6 +245,7 @@ trait RepositoryViewerControllerBase extends ControllerBase {
   post("/:owner/:repository/commit/:id/comment/new", commentForm)(readableUsersOnly { (form, repository) =>
     val id = params("id")
     val commentId = createCommitComment(repository.owner, repository.name, id, context.loginAccount.get.userName, form.content, form.fileName, form.oldLineNumber, form.newLineNumber)
+    recordCommentCommitActivity(repository.owner, repository.name, context.loginAccount.get.userName, id, form.content)
     redirect(s"/${repository.owner}/${repository.name}/commit/${id}#commit-comment-${commentId}")
   })
 
