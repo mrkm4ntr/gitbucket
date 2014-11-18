@@ -977,11 +977,19 @@ table.diff .add-comment {
     z-index: 99;
 }
 
-table.diff tbody tr.inline-comment-form:hover {
+table.diff tbody tr.not-diff {
+    font-family: '"Helvetica Neue", Helvetica, Arial, sans-serif';
+}
+
+tr.not-diff .box {
+    margin-bottom: 0px;
+}
+
+table.diff tbody tr.not-diff:hover {
     background-color: #fff;
 }
 
-table.diff tbody tr.inline-comment-form:hover td{
+table.diff tbody tr.not-diff:hover td{
     background-color: #fff;
 }
 

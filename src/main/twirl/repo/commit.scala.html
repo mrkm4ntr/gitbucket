@@ -84,6 +84,9 @@
       </tr>
     </table>
     @helper.html.diff(diffs, repository, Some(commit.id), oldCommitId, true, hasWritePermission)
+    <label class="checkbox">
+      <input type="checkbox" id="show-notes"> Show line notes below
+    </label>
     @issues.html.commentlist(None, comments, hasWritePermission, repository, None)
     @commentform(commitId = commitId, hasWritePermission = hasWritePermission, repository = repository)
   }
@@ -126,6 +129,15 @@ $(function(){
       })
     );
   }
+
+  $('#show-notes').change(function() {
+    if (this.checked) {
+      $('.inline-comment').show();
+    } else {
+      $('.inline-comment').hide();
+      $('.diff .inline-comment').show();
+    }
+  });
 });
 </script>
 <style type="text/css">
