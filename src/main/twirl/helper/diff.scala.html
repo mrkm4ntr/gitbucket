@@ -126,7 +126,9 @@ $(function(){
       var newline = $v.attr('newline');
       var tmp = $('<tr class="not-diff"><td colspan="3" style="white-space: initial; line-height: initial; padding: 10px;"></td></tr>');
       tmp.children('td').html($(this).clone().show());
-      $(this).hide();
+      if (!$('#show-notes')[0].checked) {
+        $(this).hide();
+      }
       if (typeof oldline !== 'undefined') {
         $('table[filename="' + filename + '"]').find('table.inlinediff').find('.oldline').filter(function() {
           return new RegExp('^' + oldline + '$').test($(this).text());
@@ -148,7 +150,7 @@ $(function(){
       }
     );
     $('.add-comment').click(function() {
-      $(this).hide();
+      $this = $(this);
       var $tr = $(this).closest('tr');
       if (!$tr.nextAll(':not(.not-diff):first').prev().hasClass('inline-comment-form')) {
         var commitId = $(this).closest('.table-bordered').attr('commitId');
@@ -168,6 +170,7 @@ $(function(){
             dataType : 'html'
           },
           function(responseContent) {
+            $this.hide();
             var tmp = $('<tr class="inline-comment-form not-diff"><td colspan="3" style="white-space: initial; padding: 10px;"></td></tr>');
             tmp.children('td').html(responseContent);
             $tr.nextAll(':not(.not-diff):first').before(tmp);

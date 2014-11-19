@@ -977,6 +977,11 @@ table.diff .add-comment {
     z-index: 99;
 }
 
+table.diff .add-comment:hover {
+    padding: 4px;
+    top: -1px;
+}
+
 table.diff tbody tr.not-diff {
     font-family: '"Helvetica Neue", Helvetica, Arial, sans-serif';
 }
