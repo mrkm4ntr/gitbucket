@@ -275,6 +275,7 @@ trait PullRequestsControllerBase extends ControllerBase {
             case (Some(userName), Some(repositoryName)) => (userName, repositoryName) :: getForkedRepositories(userName, repositoryName)
             case _ => (forkedRepository.owner, forkedRepository.name) :: getForkedRepositories(forkedRepository.owner, forkedRepository.name)
           },
+          commits.flatten.map(commit => getCommitComments(forkedRepository.owner, forkedRepository.name, commit.id)).flatten.toList,
           originBranch,
           forkedBranch,
           oldId.getName,

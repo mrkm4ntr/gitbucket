@@ -126,7 +126,7 @@ $(function(){
       var newline = $v.attr('newline');
       var tmp = $('<tr class="not-diff"><td colspan="3" style="white-space: initial; line-height: initial; padding: 10px;"></td></tr>');
       tmp.children('td').html($(this).clone().show());
-      if (!$('#show-notes')[0].checked) {
+      if (typeof $('#show-notes')[0] !== 'undefined' && !$('#show-notes')[0].checked) {
         $(this).hide();
       }
       if (typeof oldline !== 'undefined') {

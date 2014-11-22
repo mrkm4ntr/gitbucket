@@ -10,32 +10,36 @@
 </div>
 <script>
 $(function(){
-  var callback = function(data){
-    $('#update-comment-@commentId, #cancel-comment-@commentId').removeAttr('disabled');
-    $('#commit-commentContent-@commentId').empty().html(data.content);
-    prettyPrint();
-  };
+  var curriedCallback = function($inline) {
+    return function(data){
+      $('#update-comment-@commentId, #cancel-comment-@commentId', $inline).removeAttr('disabled');
+      $('#commit-commentContent-@commentId', $inline).empty().html(data.content);
+      prettyPrint();
+    }
+  }
 
   $('#update-comment-@commentId').click(function(){
-    $('#update-comment-@commentId, #cancel-comment-@commentId').attr('disabled', 'disabled');
+    $inline = $(this).closest('.inline-comment');
+    $('#update-comment-@commentId, #cancel-comment-@commentId', $inline).attr('disabled', 'disabled');
     $.ajax({
       url: '@path/@owner/@repository/commit_comments/edit/@commentId',
       type: 'POST',
       data: {
         issueId : 0,	// TODO
-        content : $('#edit-content-@commentId').val()
+        content : $('#edit-content-@commentId', $inline).val()
       }
     }).done(
-      callback
+      curriedCallback($inline)
     ).fail(function(req) {
-      $('#update-comment-@commentId, #cancel-comment-@commentId').removeAttr('disabled');
-      $('#error-edit-content-@commentId').text($.parseJSON(req.responseText).content);
+      $('#update-comment-@commentId, #cancel-comment-@commentId', $inline).removeAttr('disabled');
+      $('#error-edit-content-@commentId', $inline).text($.parseJSON(req.responseText).content);
     });
   });
 
   $('#cancel-comment-@commentId').click(function(){
-    $('#update-comment-@commentId, #cancel-comment-@commentId').attr('disabled', 'disabled');
-    $.get('@path/@owner/@repository/commit_comments/_data/@commentId', callback);
+    $inline = $(this).closest('.inline-comment');
+    $('#update-comment-@commentId, #cancel-comment-@commentId', $inline).attr('disabled', 'disabled');
+    $.get('@path/@owner/@repository/commit_comments/_data/@commentId', curriedCallback($inline));
     return false;
   });
 });

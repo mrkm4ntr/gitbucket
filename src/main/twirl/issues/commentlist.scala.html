@@ -167,10 +167,10 @@ $(function(){
     return false;
   });
 }
-  $('.commit-comment-box i.icon-pencil').click(function(){
+  $(document).on('click', '.commit-comment-box i.icon-pencil', function(){
     var id  = $(this).closest('a').data('comment-id');
     var url = '@url(repository)/commit_comments/_data/' + id;
-    var $content = $('#commit-commentContent-' + id);
+    var $content = $('#commit-commentContent-' + id, $(this).closest('.inline-comment'));
 
     $.get(url,
     {
