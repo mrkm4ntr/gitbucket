@@ -272,7 +272,7 @@ trait RepositoryViewerControllerBase extends ControllerBase {
           contentType = formats("json")
           org.json4s.jackson.Serialization.write(
             Map("content" -> view.Markdown.toHtml(x.content,
-              repository, false, true)
+              repository, false, true, true, isEditable(x.userName, x.repositoryName, x.commentedUserName))
             ))
         }
       } else Unauthorized

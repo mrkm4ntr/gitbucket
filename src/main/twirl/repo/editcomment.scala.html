@@ -5,41 +5,40 @@
   <textarea style="width: 635px; height: 100px;" id="edit-content-@commentId">@content</textarea>
 }
 <div>
-  <input type="button" id="cancel-comment-@commentId" class="btn btn-small btn-danger" value="Cancel"/>
-  <input type="button" id="update-comment-@commentId" class="btn btn-small pull-right" value="Update comment"/>
+  <input type="button" class="cancel-comment-@commentId btn btn-small btn-danger" value="Cancel"/>
+  <input type="button" class="update-comment-@commentId btn btn-small pull-right" value="Update comment"/>
 </div>
 <script>
 $(function(){
-  var curriedCallback = function($inline) {
+  var curriedCallback = function($box) {
     return function(data){
-      $('#update-comment-@commentId, #cancel-comment-@commentId', $inline).removeAttr('disabled');
-      $('#commit-commentContent-@commentId', $inline).empty().html(data.content);
+      $('.update-comment-@commentId, .cancel-comment-@commentId', $box).removeAttr('disabled');
+      $('.commit-commentContent-@commentId').empty().html(data.content);
       prettyPrint();
     }
   }
 
-  $('#update-comment-@commentId').click(function(){
-    $inline = $(this).closest('.inline-comment');
-    $('#update-comment-@commentId, #cancel-comment-@commentId', $inline).attr('disabled', 'disabled');
+  $('.update-comment-@commentId').click(function(){
+    $box = $(this).closest('.box');
+    $('.update-comment-@commentId, .cancel-comment-@commentId', $box).attr('disabled', 'disabled');
     $.ajax({
       url: '@path/@owner/@repository/commit_comments/edit/@commentId',
       type: 'POST',
       data: {
-        issueId : 0,	// TODO
-        content : $('#edit-content-@commentId', $inline).val()
+        content : $('#edit-content-@commentId', $box).val()
       }
     }).done(
-      curriedCallback($inline)
+      curriedCallback($box)
     ).fail(function(req) {
-      $('#update-comment-@commentId, #cancel-comment-@commentId', $inline).removeAttr('disabled');
-      $('#error-edit-content-@commentId', $inline).text($.parseJSON(req.responseText).content);
+      $('.update-comment-@commentId, .cancel-comment-@commentId', $box).removeAttr('disabled');
+      $('.error-edit-content-@commentId', $box).text($.parseJSON(req.responseText).content);
     });
   });
 
-  $('#cancel-comment-@commentId').click(function(){
-    $inline = $(this).closest('.inline-comment');
-    $('#update-comment-@commentId, #cancel-comment-@commentId', $inline).attr('disabled', 'disabled');
-    $.get('@path/@owner/@repository/commit_comments/_data/@commentId', curriedCallback($inline));
+  $('.cancel-comment-@commentId').click(function(){
+    $box = $(this).closest('.box');
+    $('.update-comment-@commentId, .cancel-comment-@commentId', $box).attr('disabled', 'disabled');
+    $.get('@path/@owner/@repository/commit_comments/_data/@commentId', curriedCallback($box));
     return false;
   });
 });
