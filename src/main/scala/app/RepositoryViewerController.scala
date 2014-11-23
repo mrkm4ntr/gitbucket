@@ -244,9 +244,9 @@ trait RepositoryViewerControllerBase extends ControllerBase {
 
   post("/:owner/:repository/commit/:id/comment/new", commentForm)(readableUsersOnly { (form, repository) =>
     val id = params("id")
-    val commentId = createCommitComment(repository.owner, repository.name, id, context.loginAccount.get.userName, form.content, form.fileName, form.oldLineNumber, form.newLineNumber)
+    createCommitComment(repository.owner, repository.name, id, context.loginAccount.get.userName, form.content, form.fileName, form.oldLineNumber, form.newLineNumber)
     recordCommentCommitActivity(repository.owner, repository.name, context.loginAccount.get.userName, id, form.content)
-    redirect(s"/${repository.owner}/${repository.name}/commit/${id}#commit-comment-${commentId}")
+    redirect(s"/${repository.owner}/${repository.name}/commit/${id}")
   })
 
   ajaxGet("/:owner/:repository/commit/:id/comment/_form")(readableUsersOnly { repository =>
@@ -260,6 +260,13 @@ trait RepositoryViewerControllerBase extends ControllerBase {
       hasWritePermission = hasWritePermission(repository.owner, repository.name, context.loginAccount),
       repository = repository
     )
+  })
+
+  ajaxPost("/:owner/:repository/commit/:id/comment/_data/new", commentForm)(readableUsersOnly { (form, repository) =>
+    val id = params("id")
+    val commentId = createCommitComment(repository.owner, repository.name, id, context.loginAccount.get.userName, form.content, form.fileName, form.oldLineNumber, form.newLineNumber)
+    recordCommentCommitActivity(repository.owner, repository.name, context.loginAccount.get.userName, id, form.content)
+    helper.html.commitcomment(getCommitComment(repository.owner, repository.name, commentId.toString).get, hasWritePermission(repository.owner, repository.name, context.loginAccount), repository)
   })
 
   ajaxGet("/:owner/:repository/commit_comments/_data/:id")(readableUsersOnly { repository =>
