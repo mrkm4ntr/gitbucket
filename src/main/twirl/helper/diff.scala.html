@@ -3,7 +3,8 @@
  newCommitId: Option[String],
  oldCommitId: Option[String],
  showIndex: Boolean,
- hasWritePermission: Boolean)(implicit context: app.Context)
+ hasWritePermission: Boolean,
+ showLineNotes: Boolean)(implicit context: app.Context)
 @import context._
 @import view.helpers._
 @import org.eclipse.jgit.diff.DiffEntry.ChangeType
@@ -119,6 +120,7 @@ $(function(){
         }
       }
     }
+    @if(showLineNotes){
     $('.inline-comment').each(function(i, v) {
       var $v = $(v);
       var filename = $v.attr('filename');
@@ -181,6 +183,7 @@ $(function(){
     $('table.diff').on('click', '.btn-default', function() {
       $(this).closest('.inline-comment-form').remove();
     });
+    }
     }
   }
 });
