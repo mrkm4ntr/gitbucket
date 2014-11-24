@@ -40,23 +40,17 @@
       $($form.serializeArray()).each(function(i, v) {
         param[v.name] = v.value;
       });
-      var callback = function(data) {
-        $form.closest('tr').removeClass('inline-comment-form').find('td').html('<td colspan="3"></td>').html(data);
-        $('#comment-list').append(data);
-      }
       $.ajax({
         url: '@url(repository)/commit/@commitId/comment/_data/new',
         type: 'POST',
-        data: param,
-        success: callback,
-        error: function(data) {
-          $('#error-content').html(data.content);
-        }
-      })/*.done(
-        callback($form)
-      ).fail(function(req) {
-
-      })*/;
+        data: param
+      }).done(function(data) {
+        $form.closest('tr').removeClass('inline-comment-form').find('td').html('<td colspan="3"></td>').html(data);
+        $('#comment-list').append(data);
+      }).fail(function(req) {
+        $('.btn-inline-comment').removeAttr('disabled');
+        $('#error-content', $form).html($.parseJSON(req.responseText).content);
+      });
     })
   </script>
 }

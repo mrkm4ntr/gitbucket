@@ -68,7 +68,13 @@
         <span class="label label-success issue-status">Open</span>
       }
       <div class="small" style="text-align: center;">
-        <span class="strong">@comments.size</span> @plural(comments.size, "comment")
+        <span class="strong">@comments.flatMap @{
+          case comment: model.IssueComment => Some(comment)
+          case _ => None
+        }.size</span> @plural(comments.flatMap {
+          case comment: model.IssueComment => Some(comment)
+          case _ => None
+        }.size, "comment")
       </div>
     }
     <hr/>
