@@ -179,7 +179,6 @@ $(function(){
     return markdown;
   };
 
-  @if(issue.isDefined){
   var replaceTaskList = function(issueContentHtml, checkboxes) {
     var ss = [],
         markdown = extractMarkdown(issueContentHtml),
@@ -193,6 +192,31 @@ $(function(){
     return ss.join('');
   };
 
+  $('div[class*=commit-commentContent-]').on('click', ':checkbox', function(ev){
+    var $commentContent = $(ev.target).parents('div[class*=commit-commentContent-]'),
+        commentId = $commentContent.attr('class').match(/commit-commentContent-.+/)[0].replace(/commit-commentContent-/, ''),
+        checkboxes = $commentContent.find(':checkbox');
+    $.get('@url(repository)/commit_comments/_data/' + commentId,
+      {
+        dataType : 'html'
+      },
+      function(responseContent){
+        $.ajax({
+          url: '@url(repository)/commit_comments/edit/' + commentId,
+          type: 'POST',
+          data: {
+            issueId : 0,
+            content : replaceTaskList(responseContent, checkboxes)
+          },
+          success: function(data) {
+            $('.commit-commentContent-' + commentId).html(data.content);
+          }
+        });
+      }
+    );
+  });
+
+  @if(issue.isDefined){
   $('#issueContent').on('click', ':checkbox', function(ev){
     var checkboxes = $('#issueContent :checkbox');
     $.get('@url(repository)/issues/_data/@issue.get.issueId',

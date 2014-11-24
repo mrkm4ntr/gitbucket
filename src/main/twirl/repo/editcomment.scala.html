@@ -18,7 +18,7 @@ $(function(){
     }
   }
 
-  $('.update-comment-@commentId').click(function(){
+  $(document).on('click', '.update-comment-@commentId', function(){
     $box = $(this).closest('.box');
     $('.update-comment-@commentId, .cancel-comment-@commentId', $box).attr('disabled', 'disabled');
     $.ajax({
@@ -35,7 +35,7 @@ $(function(){
     });
   });
 
-  $('.cancel-comment-@commentId').click(function(){
+  $(document).on('click', '.cancel-comment-@commentId', function(){
     $box = $(this).closest('.box');
     $('.update-comment-@commentId, .cancel-comment-@commentId', $box).attr('disabled', 'disabled');
     $.get('@path/@owner/@repository/commit_comments/_data/@commentId', curriedCallback($box));
