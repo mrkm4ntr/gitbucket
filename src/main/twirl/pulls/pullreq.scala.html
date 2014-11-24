@@ -1,6 +1,6 @@
 @(issue: model.Issue,
   pullreq: model.PullRequest,
-  comments: List[model.IssueComment],
+  comments: List[model.Comment],
   issueLabels: List[model.Label],
   collaborators: List[String],
   milestones: List[(model.Milestone, Int, Int)],
@@ -16,7 +16,10 @@
     @defining(dayByDayCommits.flatten){ commits =>
       <div class="pullreq-info">
         @if(issue.closed) {
-          @comments.find(_.action == "merge").map{ comment =>
+          @comments.flatMap @{
+            case issueComment: model.IssueComment => Some(issueComment)
+            case other => None
+          }.find(_.action == "merge").map{ comment =>
             <span class="label label-info">Merged</span>
             @user(comment.commentedUserName, styleClass="username strong") merged @commits.size @plural(commits.size, "commit")
             into <code>@pullreq.userName:@pullreq.branch</code> from <code>@pullreq.requestUserName:@pullreq.requestBranch</code>
@@ -33,7 +36,10 @@
         }
       </div>
       <ul class="nav nav-tabs fill-width pull-left" id="pullreq-tab">
-        <li class="active"><a href="#conversation">Conversation <span class="badge">@comments.size</span></a></li>
+        <li class="active"><a href="#conversation">Conversation <span class="badge">@comments.flatMap @{
+          case comment: model.IssueComment => Some(comment)
+          case _: model.CommitComment => None
+        }.size</span></a></li>
         <li><a href="#commits">Commits <span class="badge">@commits.size</span></a></li>
         <li><a href="#files">Files Changed <span class="badge">@diffs.size</span></a></li>
       </ul>
@@ -42,10 +48,10 @@
           @pulls.html.conversation(issue, pullreq, comments, issueLabels, collaborators, milestones, labels, hasWritePermission, repository)
         </div>
         <div class="tab-pane" id="commits">
-          @pulls.html.commits(dayByDayCommits, repository)
+          @pulls.html.commits(dayByDayCommits, Some(comments), repository)
         </div>
         <div class="tab-pane" id="files">
-          @helper.html.diff(diffs, repository, Some(commits.head.id), Some(commits.last.id), true)
+          @helper.html.diff(diffs, repository, Some(commits.head.id), Some(commits.last.id), true, hasWritePermission, true)
         </div>
       </div>
     }
