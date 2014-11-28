@@ -112,6 +112,18 @@ $(function(){
     renderDiffs(0);
   });
 
+  function getInlineCommentContainer(viewType, isNew) {
+    if (viewType == 0) {
+      if (isNew) {
+        return $('<tr class="not-diff"><td colspan="2"></td><td colspan="2" style="white-space: initial; line-height: initial; padding: 10px;"></td></tr>');
+      } else {
+        return $('<tr class="not-diff"><td colspan="2" style="white-space: initial; line-height: initial; padding: 10px;"></td><td colspan="3"></tr>');
+      }
+    } else {
+      return $('<tr class="not-diff"><td colspan="3" style="white-space: initial; line-height: initial; padding: 10px;"></td></tr>');
+    }
+  }
+
   function renderDiffs(viewType){
     @diffs.zipWithIndex.map { case (diff, i) =>
       @if(diff.newContent != None || diff.oldContent != None){
@@ -123,24 +135,26 @@ $(function(){
     @if(showLineNotes){
       $('.inline-comment').each(function(i, v) {
         var $v = $(v), filename = $v.attr('filename'),
-        oldline = $v.attr('oldline'), newline = $v.attr('newline'),
-        tmp = $('<tr class="not-diff"><td colspan="3" style="white-space: initial; line-height: initial; padding: 10px;"></td></tr>');
-        tmp.children('td').html($(this).clone().show());
+        oldline = $v.attr('oldline'), newline = $v.attr('newline');
         if (typeof $('#show-notes')[0] !== 'undefined' && !$('#show-notes')[0].checked) {
           $(this).hide();
         }
         if (typeof oldline !== 'undefined') {
-          $('table[filename="' + filename + '"]').find('table.inlinediff').find('.oldline').filter(function() {
+          var tmp = getInlineCommentContainer(viewType, false);
+          tmp.children('td:first').html($(this).clone().show());
+          $('table[filename="' + filename + '"]').find('table.diff').find('.oldline').filter(function() {
             return new RegExp('^' + oldline + '$').test($(this).text());
           }).parent().nextAll(':not(.not-diff):first').before(tmp);
         } else {
-          $('table[filename="' + filename + '"]').find('table.inlinediff').find('.newline').filter(function() {
+          var tmp = getInlineCommentContainer(viewType, true);
+          tmp.children('td:last').html($(this).clone().show());
+          $('table[filename="' + filename + '"]').find('table.diff').find('.newline').filter(function() {
             return new RegExp('^' + newline + '\\+$').test($(this).text());
           }).parent().nextAll(':not(.not-diff):first').before(tmp);
         }
       });
       @if(hasWritePermission) {
-        $('table.diff tr').hover(
+        $('table.diff th').hover(
           function() {
             $(this).find('b').css('display', 'inline-block');
           },
@@ -148,32 +162,41 @@ $(function(){
             $(this).find('b').css('display', 'none');
           }
         );
-      $('.add-comment').click(function() {
-        var $this = $(this),
-        $tr = $(this).closest('tr');
-        if (!$tr.nextAll(':not(.not-diff):first').prev().hasClass('inline-comment-form')) {
-          var commitId = $(this).closest('.table-bordered').attr('commitId'),
-          fileName = $(this).closest('.table-bordered').attr('fileName'),
-          oldLineNumber = $(this).closest('.newline').prev('.oldline').text(),
-          newLineNumber = $(this).closest('.newline').clone().children().remove().end().text(),
-          url = '@url(repository)/commit/' + commitId + '/comment/_form?fileName=' + fileName;
-          if (!isNaN(oldLineNumber) && oldLineNumber != null && oldLineNumber !== '') {
-            url += ('&oldLineNumber=' + oldLineNumber)
+        $('table.diff td').hover(
+          function() {
+            $(this).prev('th').find('b').css('display', 'inline-block');
+          },
+          function() {
+            $(this).prev('th').find('b').css('display', 'none');
           }
-          if (!isNaN(newLineNumber) && newLineNumber != null && newLineNumber !== '') {
-            url += ('&newLineNumber=' + newLineNumber)
-          }
-          $.get(
-            url,
-            {
-              dataType : 'html'
-            },
-            function(responseContent) {
-              $this.hide();
-              var tmp = $('<tr class="inline-comment-form not-diff"><td colspan="3" style="white-space: initial; padding: 10px;"></td></tr>');
-              tmp.children('td').html(responseContent);
-              $tr.nextAll(':not(.not-diff):first').before(tmp);
-            });
+        );
+        $('.add-comment').click(function() {
+          var $this = $(this),
+          $tr = $(this).closest('tr');
+          if (!$tr.nextAll(':not(.not-diff):first').prev().hasClass('inline-comment-form')) {
+            var commitId = $(this).closest('.table-bordered').attr('commitId'),
+            fileName = $(this).closest('.table-bordered').attr('fileName'),
+            oldLineNumber = $(this).closest('.newline').prev('.oldline').text(),
+            newLineNumber = $(this).closest('.newline').clone().children().remove().end().text(),
+            url = '@url(repository)/commit/' + commitId + '/comment/_form?fileName=' + fileName;
+            if (!isNaN(oldLineNumber) && oldLineNumber != null && oldLineNumber !== '') {
+              url += ('&oldLineNumber=' + oldLineNumber)
+            }
+            if (!isNaN(newLineNumber) && newLineNumber != null && newLineNumber !== '') {
+              url += ('&newLineNumber=' + newLineNumber)
+            }
+            $.get(
+              url,
+              {
+                dataType : 'html'
+              },
+              function(responseContent) {
+                $this.hide();
+                var tmp = $('<tr class="inline-comment-form not-diff"><td colspan="3" style="white-space: initial; padding: 10px;"></td></tr>');
+                tmp.children('td').html(responseContent);
+                $tr.nextAll(':not(.not-diff):first').before(tmp);
+              }
+            );
           }
         });
         $('table.diff').on('click', '.btn-default', function() {
