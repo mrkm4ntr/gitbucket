@@ -4,6 +4,18 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.{ReentrantLock, Lock}
 import ControlUtil._
 
+class LockWith[A](a: => A) {
+  def run(key: String): A = LockUtil.lock(key)(a)
+  def map[B](f: A => B): LockWith[B] = {
+    lazy val b = f(a)
+    LockWith(b)
+  }
+}
+
+object LockWith {
+  def apply[A](a: => A) = new LockWith(a)
+}
+
 object LockUtil {
 
   /**

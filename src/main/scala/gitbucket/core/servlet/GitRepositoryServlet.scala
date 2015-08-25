@@ -192,6 +192,7 @@ class CommitLogHook(owner: String, repository: String, pusher: String, baseUrl: 
                    ReceiveCommand.Type.UPDATE |
                    ReceiveCommand.Type.UPDATE_NONFASTFORWARD =>
                 updatePullRequests(owner, repository, branchName)
+                closeMergedPullRequests(git, branchName)
                 getAccountByUserName(pusher).map{ pusherAccount =>
                   callPullRequestWebHookByRequestBranch("synchronize", repositoryInfo, branchName, baseUrl, pusherAccount)
                 }
@@ -226,5 +227,13 @@ class CommitLogHook(owner: String, repository: String, pusher: String, baseUrl: 
         }
       }
     }
+  }
+
+  private def closeMergedPullRequests(git: Git, branch: String) {
+    for {
+      pullreq <- getPullRequestsByTarget(owner, repository, branch, false) if JGitUtil.isMergedInto(git, branch, pullreq.commitIdTo)
+      committer <- getAccountByUserName(pusher) // TODO: Committer is not always pusher.
+      repository <- getRepository(owner, repository, baseUrl)
+    } yield (LockWith(mergePullRequest(repository, pullreq.issueId, "", committer, baseUrl)).run(s"${owner}/${repository}"))
   }
 }

@@ -10,15 +10,14 @@ import ExecutionContext.Implicits.global
 import org.apache.commons.mail.{DefaultAuthenticator, HtmlEmail}
 import org.slf4j.LoggerFactory
 
-import gitbucket.core.controller.Context
 import SystemSettingsService.Smtp
 import ControlUtil.defining
 
 trait Notifier extends RepositoryService with AccountService with IssuesService {
-  def toNotify(r: RepositoryService.RepositoryInfo, issue: Issue, content: String)
-      (msg: String => String)(implicit context: Context): Unit
+  def toNotify(r: RepositoryService.RepositoryInfo, issue: Issue, content: String, userName: String)
+      (msg: String => String): Unit
 
-  protected def recipients(issue: Issue)(notify: String => Unit)(implicit session: Session, context: Context) =
+  protected def recipients(issue: Issue, userName: String)(notify: String => Unit)(implicit session: Session) =
     (
         // individual repository's owner
         issue.userName ::
@@ -29,7 +28,7 @@ trait Notifier extends RepositoryService with AccountService with IssuesService 
         getComments(issue.userName, issue.repositoryName, issue.issueId).map(_.commentedUserName)
     )
     .distinct
-    .withFilter ( _ != context.loginAccount.get.userName )  // the operation in person is excluded
+    .withFilter ( _ != userName )  // the operation in person is excluded
     .foreach ( getAccountByUserName(_) filterNot (_.isGroupAccount) filterNot (LDAPUtil.isDummyMailAddress(_)) foreach (x => notify(x.mailAddress)) )
 
 }
@@ -67,8 +66,8 @@ object Notifier {
 class Mailer(private val smtp: Smtp) extends Notifier {
   private val logger = LoggerFactory.getLogger(classOf[Mailer])
 
-  def toNotify(r: RepositoryService.RepositoryInfo, issue: Issue, content: String)
-      (msg: String => String)(implicit context: Context) = {
+  def toNotify(r: RepositoryService.RepositoryInfo, issue: Issue, content: String, userName: String)
+      (msg: String => String) = {
     val database = Database()
 
     val f = Future {
@@ -76,7 +75,7 @@ class Mailer(private val smtp: Smtp) extends Notifier {
         defining(
           s"[${r.name}] ${issue.title} (#${issue.issueId})" ->
             msg(Markdown.toHtml(content, r, false, true, false))) { case (subject, msg) =>
-            recipients(issue) { to =>
+            recipients(issue, userName) { to =>
               val email = new HtmlEmail
               email.setHostName(smtp.host)
               email.setSmtpPort(smtp.port.get)
@@ -87,8 +86,8 @@ class Mailer(private val smtp: Smtp) extends Notifier {
                 email.setSSLOnConnect(ssl)
               }
               smtp.fromAddress
-                .map (_ -> smtp.fromName.getOrElse(context.loginAccount.get.userName))
-                .orElse (Some("notifications@gitbucket.com" -> context.loginAccount.get.userName))
+                .map (_ -> smtp.fromName.getOrElse(userName))
+                .orElse (Some("notifications@gitbucket.com" -> userName))
                 .foreach { case (address, name) =>
                   email.setFrom(address, name)
               }
@@ -111,6 +110,6 @@ class Mailer(private val smtp: Smtp) extends Notifier {
   }
 }
 class MockMailer extends Notifier {
-  def toNotify(r: RepositoryService.RepositoryInfo, issue: Issue, content: String)
-      (msg: String => String)(implicit context: Context): Unit = {}
+  def toNotify(r: RepositoryService.RepositoryInfo, issue: Issue, content: String, userName: String)
+      (msg: String => String): Unit = {}
 }

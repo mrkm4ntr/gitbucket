@@ -561,6 +561,19 @@ object JGitUtil {
       }
     }
 
+  /**
+   * Returns if a branch is reachable from another commit.
+   */
+  def isMergedInto(git: Git, branch: String, commitId: String): Boolean = {
+    using(new RevWalk(git.getRepository)){ revWalk =>
+      defining(revWalk.parseCommit(git.getRepository.resolve(commitId + "^0"))) { commit =>
+        val r = git.log.add(git.getRepository.resolve(s"refs/heads/${branch}")).call.iterator.next
+        val tmp = revWalk.isMergedInto(commit, r)
+        tmp
+      }
+    }
+  }
+
   def initRepository(dir: java.io.File): Unit =
     using(new RepositoryBuilder().setGitDir(dir).setBare.build){ repository =>
       repository.create
