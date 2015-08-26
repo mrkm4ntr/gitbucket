@@ -3,6 +3,7 @@ package gitbucket.core.servlet
 import java.io.File
 
 import gitbucket.core.api
+import gitbucket.core.controller.Context
 import gitbucket.core.model.Session
 import gitbucket.core.plugin.{GitRepositoryRouting, PluginRegistry}
 import gitbucket.core.service.IssuesService.IssueSearchCondition
@@ -73,7 +74,8 @@ class GitBucketRepositoryResolver(parent: FileResolver[HttpServletRequest]) exte
 
 }
 
-class GitBucketReceivePackFactory extends ReceivePackFactory[HttpServletRequest] with SystemSettingsService {
+class GitBucketReceivePackFactory extends ReceivePackFactory[HttpServletRequest]
+  with SystemSettingsService with AccountService {
 
   private val logger = LoggerFactory.getLogger(classOf[GitBucketReceivePackFactory])
 
@@ -94,7 +96,8 @@ class GitBucketReceivePackFactory extends ReceivePackFactory[HttpServletRequest]
 
         if(!repository.endsWith(".wiki")){
           defining(request) { implicit r =>
-            val hook = new CommitLogHook(owner, repository, pusher, baseUrl)
+            val context = Context(loadSystemSettings(), getAccountByUserName(pusher), request)
+            val hook = new CommitLogHook(owner, repository, pusher, baseUrl, Some(context))
             receivePack.setPreReceiveHook(hook)
             receivePack.setPostReceiveHook(hook)
           }
@@ -108,7 +111,7 @@ class GitBucketReceivePackFactory extends ReceivePackFactory[HttpServletRequest]
 
 import scala.collection.JavaConverters._
 
-class CommitLogHook(owner: String, repository: String, pusher: String, baseUrl: String)(implicit session: Session)
+class CommitLogHook(owner: String, repository: String, pusher: String, baseUrl: String, context: Option[Context] = None)(implicit session: Session)
   extends PostReceiveHook with PreReceiveHook
   with RepositoryService with AccountService with IssuesService with ActivityService with PullRequestService with WebHookService
   with WebHookPullRequestService {
@@ -192,7 +195,9 @@ class CommitLogHook(owner: String, repository: String, pusher: String, baseUrl: 
                    ReceiveCommand.Type.UPDATE |
                    ReceiveCommand.Type.UPDATE_NONFASTFORWARD =>
                 updatePullRequests(owner, repository, branchName)
-                closeMergedPullRequests(git, branchName)
+                context.foreach { implicit c =>
+                  closeMergedPullRequests(git, branchName)
+                }
                 getAccountByUserName(pusher).map{ pusherAccount =>
                   callPullRequestWebHookByRequestBranch("synchronize", repositoryInfo, branchName, baseUrl, pusherAccount)
                 }
@@ -229,11 +234,17 @@ class CommitLogHook(owner: String, repository: String, pusher: String, baseUrl: 
     }
   }
 
-  private def closeMergedPullRequests(git: Git, branch: String) {
+  private def closeMergedPullRequests(git: Git, branch: String)(implicit context: Context) {
     for {
       pullreq <- getPullRequestsByTarget(owner, repository, branch, false) if JGitUtil.isMergedInto(git, branch, pullreq.commitIdTo)
       committer <- getAccountByUserName(pusher) // TODO: Committer is not always pusher.
       repository <- getRepository(owner, repository, baseUrl)
-    } yield (LockWith(mergePullRequest(repository, pullreq.issueId, "", committer, baseUrl)).run(s"${owner}/${repository}"))
+    } yield (LockWith(closeMergedPullRequest(repository, pullreq.issueId, "", committer, baseUrl))
+      .map(_.foreach {
+          Notifier().toNotify(repository, _, "merge") {
+            Notifier.msgStatus(s"${baseUrl}/${owner}/${repository.name}/pull/${pullreq.issueId}")
+          }
+        }
+      ).map(_ => callPullRequestWebHook("closed", repository, pullreq.issueId, baseUrl, context.loginAccount.get)).run(s"${owner}/${repository}"))
   }
 }

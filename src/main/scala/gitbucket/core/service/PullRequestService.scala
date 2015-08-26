@@ -1,6 +1,6 @@
 package gitbucket.core.service
 
-import gitbucket.core.model.{Account, Issue, PullRequest, WebHook}
+import gitbucket.core.model.{Account, Issue, PullRequest}
 import gitbucket.core.model.Profile._
 import gitbucket.core.util.ControlUtil._
 import gitbucket.core.util.Directory._
@@ -13,7 +13,7 @@ import profile.simple._
 import scala.collection.JavaConverters._
 
 
-trait PullRequestService { self: IssuesService with ActivityService with RepositoryService with WebHookPullRequestService =>
+trait PullRequestService { self: IssuesService with ActivityService with RepositoryService =>
   import PullRequestService._
 
   def getPullRequest(owner: String, repository: String, issueId: Int)
@@ -138,8 +138,11 @@ trait PullRequestService { self: IssuesService with ActivityService with Reposit
       }
     }
 
-  def mergePullRequest(repository: RepositoryService.RepositoryInfo, issueId: Int, message: String,
-        committer: Account, baseUrl: String)(implicit session: Session) = {
+  /**
+   * Close merged pull request and return issue to notify.
+   */
+  def closeMergedPullRequest(repository: RepositoryService.RepositoryInfo, issueId: Int, message: String,
+        committer: Account, baseUrl: String)(implicit session: Session): Option[Issue] = {
     val owner = repository.owner
     val name = repository.name
     getPullRequest(owner, name, issueId).map { case (issue, pullreq) =>
@@ -154,7 +157,7 @@ trait PullRequestService { self: IssuesService with ActivityService with Reposit
 
         val commits = using(
           Git.open(getRepositoryDir(owner, name)),
-          Git.open(getRepositoryDir(pullreq.requestUserName, pullreq.requestUserName))
+          Git.open(getRepositoryDir(pullreq.requestUserName, pullreq.repositoryName))
         ){ (oldGit, newGit) =>
           val oldId = oldGit.getRepository.resolve(pullreq.commitIdFrom)
           val newId = newGit.getRepository.resolve(pullreq.commitIdTo)
@@ -177,13 +180,14 @@ trait PullRequestService { self: IssuesService with ActivityService with Reposit
           closeIssuesFromMessage(message, committer.userName, owner, name)
         }
         // call web hook
-        callPullRequestWebHook("closed", repository, issueId, baseUrl, committer)
+        //callPullRequestWebHook("closed", repository, issueId, baseUrl, committer)
 
         // notifications
-        Notifier().toNotify(repository, issue, "merge", committer.userName){
+        /*Notifier().toNotify(repository, issue, "merge"){
           Notifier.msgStatus(s"${baseUrl}/${owner}/${name}/pull/${issueId}")
-        }
+        }*/
 
+        issue
       }
     }
   }

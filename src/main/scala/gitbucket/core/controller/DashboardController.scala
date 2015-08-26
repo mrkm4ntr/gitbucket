@@ -1,18 +1,18 @@
 package gitbucket.core.controller
 
 import gitbucket.core.dashboard.html
-import gitbucket.core.service.{RepositoryService, PullRequestService, AccountService, IssuesService}
+import gitbucket.core.service._
 import gitbucket.core.util.{StringUtil, Keys, UsersAuthenticator}
 import gitbucket.core.util.Implicits._
 import gitbucket.core.service.IssuesService._
 
 class DashboardController extends DashboardControllerBase
   with IssuesService with PullRequestService with RepositoryService with AccountService
-  with UsersAuthenticator
+  with ActivityService with UsersAuthenticator
 
 trait DashboardControllerBase extends ControllerBase {
   self: IssuesService with PullRequestService with RepositoryService with AccountService
-    with UsersAuthenticator =>
+    with ActivityService with UsersAuthenticator =>
 
   get("/dashboard/issues")(usersOnly {
     val q = request.getParameter("q")
