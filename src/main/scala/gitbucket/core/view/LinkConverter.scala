@@ -18,6 +18,7 @@ trait LinkConverter { self: RequestCache =>
     escaped
       // convert issue id to link
       .replaceBy(("(?<=(^|\\W))" + issueIdPrefix + "([0-9]+)(?=(\\W|$))").r){ m =>
+        import gitbucket.core.util.Implicits.wrapContextWithOption
         getIssue(repository.owner, repository.name, m.group(2)) match {
           case Some(issue) if(issue.isPullRequest)
                        => Some(s"""<a href="${context.baseUrl}/${repository.owner}/${repository.name}/pull/${m.group(2)}">#${m.group(2)}</a>""")

@@ -205,6 +205,7 @@ object helpers extends AvatarImageProvider with LinkConverter with RequestCache 
 
   private def userWithContent(userName: String, mailAddress: String = "", styleClass: String = "")(content: Html)(implicit context: Context): Html =
     (if(mailAddress.isEmpty){
+      import gitbucket.core.util.Implicits.wrapContextWithOption
       getCachedAccountByUserName(userName)
     } else {
       getAccountByMailAddress(mailAddress)

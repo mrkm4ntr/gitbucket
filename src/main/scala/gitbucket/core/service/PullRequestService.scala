@@ -1,13 +1,12 @@
 package gitbucket.core.service
 
-import gitbucket.core.model.{Account, Issue, PullRequest}
 import gitbucket.core.model.Profile._
+import gitbucket.core.model.{Account, Issue, PullRequest}
 import gitbucket.core.util.ControlUtil._
 import gitbucket.core.util.Directory._
+import gitbucket.core.util.JGitUtil
 import gitbucket.core.util.JGitUtil.CommitInfo
-import gitbucket.core.util.{Notifier, JGitUtil}
 import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.lib.PersonIdent
 import profile.simple._
 
 import scala.collection.JavaConverters._

@@ -15,6 +15,7 @@ trait AvatarImageProvider { self: RequestCache =>
       mailAddress: String = "", tooltip: Boolean = false)(implicit context: Context): Html = {
 
     val src = if(mailAddress.isEmpty){
+      import gitbucket.core.util.Implicits.wrapContextWithOption
       // by user name
       getCachedAccountByUserName(userName).map { account =>
         if(account.image.isEmpty && context.settings.gravatar){
