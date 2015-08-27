@@ -5,6 +5,7 @@ import java.util.Locale
 import java.util.regex.Pattern
 
 import gitbucket.core.controller.Context
+import gitbucket.core.model.Session
 import gitbucket.core.service.{RepositoryService, RequestCache, WikiService}
 import gitbucket.core.util.StringUtil
 import org.parboiled.common.StringUtils
@@ -13,6 +14,8 @@ import org.pegdown._
 import org.pegdown.ast._
 
 import scala.collection.JavaConverters._
+
+case class LinkContext(currentPath: Option[String], baseUrl: String, session: Session)
 
 object Markdown {
 
@@ -34,7 +37,7 @@ object Markdown {
              enableAnchor: Boolean,
              enableTaskList: Boolean = false,
              hasWritePermission: Boolean = false,
-             pages: List[String] = Nil)(implicit context: Context): String = {
+             pages: List[String] = Nil)(implicit context: LinkContext): String = {
 
     // escape issue id
     val s = if(enableRefsLink){
@@ -59,7 +62,6 @@ object Markdown {
 }
 
 class GitBucketLinkRender(
-    context: Context,
     repository: RepositoryService.RepositoryInfo,
     enableWikiLink: Boolean,
     pages: List[String]) extends LinkRenderer with WikiService {
@@ -117,8 +119,8 @@ class GitBucketHtmlSerializer(
     enableTaskList: Boolean,
     hasWritePermission: Boolean,
     pages: List[String]
-  )(implicit val context: Context) extends ToHtmlSerializer(
-    new GitBucketLinkRender(context, repository, enableWikiLink, pages),
+  )(implicit val context: LinkContext) extends ToHtmlSerializer(
+    new GitBucketLinkRender(repository, enableWikiLink, pages),
     Map[String, VerbatimSerializer](VerbatimSerializer.DEFAULT -> new GitBucketVerbatimSerializer).asJava
   ) with LinkConverter with RequestCache {
 
@@ -142,17 +144,19 @@ class GitBucketHtmlSerializer(
     } else if(url.startsWith("#")){
       ("#" + GitBucketHtmlSerializer.generateAnchorName(url.substring(1)))
     } else if(!enableWikiLink){
-      if(context.currentPath.contains("/blob/")){
-        url + (if(isImage) "?raw=true" else "")
-      } else if(context.currentPath.contains("/tree/")){
-        val paths = context.currentPath.split("/")
-        val branch = if(paths.length > 3) paths.drop(4).mkString("/") else repository.repository.defaultBranch
-        repository.httpUrl.replaceFirst("/git/", "/").stripSuffix(".git") + "/blob/" + branch + "/" + url + (if(isImage) "?raw=true" else "")
-      } else {
-        val paths = context.currentPath.split("/")
-        val branch = if(paths.length > 3) paths.last else repository.repository.defaultBranch
-        repository.httpUrl.replaceFirst("/git/", "/").stripSuffix(".git") + "/blob/" + branch + "/" + url + (if(isImage) "?raw=true" else "")
-      }
+      context.currentPath.map { currentPath =>
+        if (currentPath.contains("/blob/")) {
+          url + (if (isImage) "?raw=true" else "")
+        } else if (currentPath.contains("/tree/")) {
+          val paths = currentPath.split("/")
+          val branch = if (paths.length > 3) paths.drop(4).mkString("/") else repository.repository.defaultBranch
+          repository.httpUrl.replaceFirst("/git/", "/").stripSuffix(".git") + "/blob/" + branch + "/" + url + (if (isImage) "?raw=true" else "")
+        } else {
+          val paths = currentPath.split("/")
+          val branch = if (paths.length > 3) paths.last else repository.repository.defaultBranch
+          repository.httpUrl.replaceFirst("/git/", "/").stripSuffix(".git") + "/blob/" + branch + "/" + url + (if (isImage) "?raw=true" else "")
+        }
+      }.getOrElse(url)
     } else {
       repository.httpUrl.replaceFirst("/git/", "/").stripSuffix(".git") + "/wiki/_blob/" + url
     }

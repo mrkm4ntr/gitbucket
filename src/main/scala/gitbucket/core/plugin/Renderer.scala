@@ -3,6 +3,7 @@ package gitbucket.core.plugin
 import gitbucket.core.controller.Context
 import gitbucket.core.service.RepositoryService
 import gitbucket.core.view.Markdown
+import gitbucket.core.util.ControlUtil.defining
 import play.twirl.api.Html
 
 /**
@@ -20,7 +21,10 @@ trait Renderer {
 object MarkdownRenderer extends Renderer {
   override def render(request: RenderRequest): Html = {
     import request._
-    Html(Markdown.toHtml(fileContent, repository, enableWikiLink, enableRefsLink, enableAnchor)(context))
+    defining(context) { implicit context =>
+      import gitbucket.core.util.Implicits.context2LinkContext
+      Html(Markdown.toHtml(fileContent, repository, enableWikiLink, enableRefsLink, enableAnchor))
+    }
   }
 }
 

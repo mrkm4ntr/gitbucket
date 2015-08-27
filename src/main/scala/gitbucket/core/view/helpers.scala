@@ -90,8 +90,10 @@ object helpers extends AvatarImageProvider with LinkConverter with RequestCache 
                enableRefsLink: Boolean,
                enableTaskList: Boolean = false,
                hasWritePermission: Boolean = false,
-               pages: List[String] = Nil)(implicit context: Context): Html =
+               pages: List[String] = Nil)(implicit context: Context): Html = {
+    import gitbucket.core.util.Implicits.context2LinkContext
     Html(Markdown.toHtml(value, repository, enableWikiLink, enableRefsLink, enableTaskList, true, hasWritePermission, pages))
+  }
 
   def renderMarkup(filePath: List[String], fileContent: String, branch: String,
                    repository: RepositoryService.RepositoryInfo,
@@ -124,8 +126,10 @@ object helpers extends AvatarImageProvider with LinkConverter with RequestCache 
   /**
    * Converts commit id, issue id and username to the link.
    */
-  def link(value: String, repository: RepositoryService.RepositoryInfo)(implicit context: Context): Html =
+  def link(value: String, repository: RepositoryService.RepositoryInfo)(implicit context: Context): Html = {
+    import gitbucket.core.util.Implicits.context2LinkContext
     Html(convertRefsLinks(value, repository))
+  }
 
   def cut(value: String, length: Int): String =
     if(value.length > length){
@@ -201,7 +205,7 @@ object helpers extends AvatarImageProvider with LinkConverter with RequestCache 
 
   private def userWithContent(userName: String, mailAddress: String = "", styleClass: String = "")(content: Html)(implicit context: Context): Html =
     (if(mailAddress.isEmpty){
-      getAccountByUserName(userName)
+      getCachedAccountByUserName(userName)
     } else {
       getAccountByMailAddress(mailAddress)
     }).map { account =>

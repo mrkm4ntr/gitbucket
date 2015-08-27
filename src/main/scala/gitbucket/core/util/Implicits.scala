@@ -6,6 +6,8 @@ import gitbucket.core.servlet.Database
 
 import javax.servlet.http.{HttpSession, HttpServletRequest}
 
+import gitbucket.core.view.LinkContext
+
 import scala.util.matching.Regex
 import scala.util.control.Exception._
 
@@ -21,6 +23,12 @@ object Implicits {
   implicit def request2Session(implicit request: HttpServletRequest): JdbcBackend#Session = Database.getSession(request)
 
   implicit def context2ApiJsonFormatContext(implicit context: Context): JsonFormat.Context = JsonFormat.Context(context.baseUrl)
+
+  implicit def wrapContextWithOption(implicit context: Context): Option[Context] = Some(context)
+  implicit def wrapContextWithOption(implicit context: LinkContext): Option[LinkContext] = Some(context)
+
+  implicit def context2LinkContext(implicit context: Context): LinkContext =
+    LinkContext(Some(context.currentPath), context.baseUrl, request2Session(context.request))
 
   implicit class RichSeq[A](seq: Seq[A]) {
 

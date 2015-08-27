@@ -73,6 +73,7 @@ class Mailer(private val smtp: Smtp) extends Notifier {
 
     val f = Future {
       database withSession { implicit session =>
+        import gitbucket.core.util.Implicits.context2LinkContext
         defining(
           s"[${r.name}] ${issue.title} (#${issue.issueId})" ->
             msg(Markdown.toHtml(content, r, false, true, false))) { case (subject, msg) =>

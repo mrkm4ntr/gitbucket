@@ -16,7 +16,7 @@ trait AvatarImageProvider { self: RequestCache =>
 
     val src = if(mailAddress.isEmpty){
       // by user name
-      getAccountByUserName(userName).map { account =>
+      getCachedAccountByUserName(userName).map { account =>
         if(account.image.isEmpty && context.settings.gravatar){
           s"""https://www.gravatar.com/avatar/${StringUtil.md5(account.mailAddress.toLowerCase)}?s=${size}&d=retro&r=g"""
         } else {
